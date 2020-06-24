@@ -21,10 +21,11 @@ import (
 func parseDevice(msgs []genetlink.Message) (*wgtypes.Device, error) {
 	var first wgtypes.Device
 	knownPeers := make(map[wgtypes.Key]int)
-
+	fmt.Printf("len msgs: %v\n" ,len(msgs))
 	for i, m := range msgs {
 		d, err := parseDeviceLoop(m)
 		if err != nil {
+			fmt.Printf("Error1: %v\n" ,err)
 			return nil, err
 		}
 
@@ -51,6 +52,7 @@ func parseDevice(msgs []genetlink.Message) (*wgtypes.Device, error) {
 
 // parseDeviceLoop parses a Device from a single generic netlink message.
 func parseDeviceLoop(m genetlink.Message) (*wgtypes.Device, error) {
+	fmt.Printf("genetlink message: %v\n" ,m)
 	ad, err := netlink.NewAttributeDecoder(m.Data)
 	if err != nil {
 		return nil, err

@@ -96,6 +96,7 @@ func (c *Client) Devices() ([]*wgtypes.Device, error) {
 // Device implements wginternal.Client.
 func (c *Client) Device(name string) (*wgtypes.Device, error) {
 	// Don't bother querying netlink with empty input.
+	fmt.Printf("checking for [%v] in client_linux\n" ,name)
 	if name == "" {
 		return nil, os.ErrNotExist
 	}
@@ -109,11 +110,13 @@ func (c *Client) Device(name string) (*wgtypes.Device, error) {
 		Data: nlenc.Bytes(name),
 	}})
 	if err != nil {
+		fmt.Printf("Error1: %v\n" ,err)
 		return nil, err
 	}
 
 	msgs, err := c.execute(wgh.CmdGetDevice, flags, b)
-	if err != nil {
+	if err != nil  {
+		fmt.Printf("Error2: %v\n" ,err)
 		return nil, err
 	}
 
@@ -123,9 +126,12 @@ func (c *Client) Device(name string) (*wgtypes.Device, error) {
 // ConfigureDevice implements wginternal.Client.
 func (c *Client) ConfigureDevice(name string, cfg wgtypes.Config) error {
 	// Large configurations are split into batches for use with netlink.
+	fmt.Printf("checking for [%v] to configure in kernel",name)
+
 	for _, b := range buildBatches(cfg) {
 		attrs, err := configAttrs(name, b)
 		if err != nil {
+			fmt.Printf("Error1: %v\n" ,err)
 			return err
 		}
 
@@ -133,8 +139,16 @@ func (c *Client) ConfigureDevice(name string, cfg wgtypes.Config) error {
 		// output messages are unused.  The netlink package checks and trims the
 		// status code value.
 		flags := netlink.Request | netlink.Acknowledge
-		if _, err := c.execute(wgh.CmdSetDevice, flags, attrs); err != nil {
+
+		 msgs, err := c.execute(wgh.CmdSetDevice, flags, attrs)
+		 fmt.Printf("msgs und err after config: %v  , %v\n" ,msgs,err)
+
+		 if err != nil {
+			fmt.Printf("Error2: %v\n" ,err)
 			return err
+		} 
+		if len(msgs)==0{
+			return os.ErrNotExist
 		}
 	}
 
@@ -154,6 +168,9 @@ func (c *Client) execute(command uint8, flags netlink.HeaderFlags, attrb []byte)
 
 	msgs, err := c.c.Execute(msg, c.family.ID, flags)
 	if err == nil {
+		if len(msgs)==0{
+			return nil, os.ErrNotExist
+		}
 		return msgs, nil
 	}
 
