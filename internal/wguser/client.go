@@ -81,19 +81,14 @@ func (c *Client) ConfigureDevice(name string, cfg wgtypes.Config) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("checking for [%v] to configure , found [%v] devices\n",name,len(devices))
 
 	for _, d := range devices {
 		dn:=deviceName(d)
-		fmt.Printf("checking  [%v] vs [%v]",name,dn)
 		if name != dn {
-			fmt.Println(" --> not equal\n")
 			continue
 		}
-		fmt.Println(" --> yay, equal\n")
 		return c.configureDevice(d, cfg)
 	}
-	fmt.Println(" -->return with error\n")
 	return os.ErrNotExist
 }
 
