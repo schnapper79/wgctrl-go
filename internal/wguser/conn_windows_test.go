@@ -3,6 +3,7 @@
 package wguser
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -18,7 +19,7 @@ var isWINE = func() bool {
 	// Reference: https://forum.winehq.org/viewtopic.php?t=4988.
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\Wine`, registry.QUERY_VALUE)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			// No key; the tests don't appear to be running in WINE.
 			return false
 		}
@@ -52,7 +53,7 @@ func testListen(t *testing.T, device string) (l net.Listener, dir string, done f
 	// Attempt to create a unique name and avoid collisions.
 	dir = fmt.Sprintf(`wguser-test%d\`, time.Now().Nanosecond())
 
-	l, err := winpipe.ListenPipe(pipePrefix+dir+device, nil)
+	l, err := winpipe.Listen(pipePrefix+dir+device, nil)
 	if err != nil {
 		t.Fatalf("failed to create Windows named pipe: %v", err)
 	}
